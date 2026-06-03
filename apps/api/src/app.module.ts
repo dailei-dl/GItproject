@@ -2,6 +2,9 @@ import { Module } from "@nestjs/common";
 import { AuditService } from "./audit/audit.service";
 import { AuthController } from "./auth/auth.controller";
 import { AuthService } from "./auth/auth.service";
+import { BusinessController } from "./business/business.controller";
+import { BusinessRepository } from "./business/business.repository";
+import { BusinessService } from "./business/business.service";
 import { CrmContractController } from "./crm-contract/crm-contract.controller";
 import { CrmContractService } from "./crm-contract/crm-contract.service";
 import { DashboardController } from "./dashboard/dashboard.controller";
@@ -14,7 +17,25 @@ import { ValueEngineController } from "./value-engine/value-engine.controller";
 import { ValueEngineService } from "./value-engine/value-engine.service";
 
 @Module({
-  controllers: [AuthController, CrmContractController, DashboardController, HealthController, ProjectFinanceController, ValueEngineController],
-  providers: [AuditService, AuthService, CrmContractService, DashboardService, PermissionService, ProjectFinanceService, ValueEngineService],
+  controllers: [
+    AuthController,
+    BusinessController,
+    CrmContractController,
+    DashboardController,
+    HealthController,
+    ProjectFinanceController,
+    ValueEngineController,
+  ],
+  providers: [
+    AuditService,
+    AuthService,
+    BusinessRepository,
+    BusinessService,
+    CrmContractService,
+    DashboardService,
+    PermissionService,
+    ProjectFinanceService,
+    ValueEngineService,
+  ],
 })
 export class AppModule {}

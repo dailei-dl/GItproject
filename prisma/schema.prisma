@@ -26,6 +26,36 @@ enum DataScope {
   self
 }
 
+enum LeadStatus {
+  new
+  qualified
+  closed
+}
+
+enum OpportunityStage {
+  open
+  won
+  lost
+}
+
+enum ContractStatus {
+  draft
+  approved
+}
+
+enum ProjectStatus {
+  active
+  closed
+}
+
+enum FinanceEntryType {
+  receipt
+  expense
+  outsource
+  tax
+  management_fee
+}
+
 model Company {
   id        String     @id @default(cuid())
   name      String
@@ -93,4 +123,92 @@ model AuditLog {
   targetId   String
   metadata   Json?
   createdAt  DateTime @default(now())
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  source    String
+  ownerName String
+  leads     Lead[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Lead {
+  id             String        @id @default(cuid())
+  customerId     String
+  customer       Customer      @relation(fields: [customerId], references: [id])
+  title          String
+  expectedAmount Decimal       @db.Decimal(18, 2)
+  status         LeadStatus    @default(new)
+  opportunity    Opportunity?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model Opportunity {
+  id             String           @id @default(cuid())
+  leadId         String           @unique
+  lead           Lead             @relation(fields: [leadId], references: [id])
+  customerId     String
+  expectedAmount Decimal          @db.Decimal(18, 2)
+  stage          OpportunityStage @default(open)
+  contracts      Contract[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+}
+
+model Contract {
+  id             String         @id @default(cuid())
+  opportunityId  String
+  opportunity    Opportunity    @relation(fields: [opportunityId], references: [id])
+  customerId     String
+  contractName   String
+  contractAmount Decimal        @db.Decimal(18, 2)
+  status         ContractStatus @default(draft)
+  project        Project?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+model Project {
+  id              String          @id @default(cuid())
+  contractId      String          @unique
+  contract        Contract        @relation(fields: [contractId], references: [id])
+  projectCode     String          @unique
+  projectName     String
+  contractAmount  Decimal         @db.Decimal(18, 2)
+  completionRatio Decimal         @db.Decimal(5, 4)
+  status          ProjectStatus   @default(active)
+  financeEntries  FinanceEntry[]
+  valueSnapshots  ValueSnapshot[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+model FinanceEntry {
+  id        String           @id @default(cuid())
+  projectId String
+  project   Project          @relation(fields: [projectId], references: [id])
+  type      FinanceEntryType
+  amount    Decimal          @db.Decimal(18, 2)
+  note      String
+  createdAt DateTime         @default(now())
+}
+
+model ValueSnapshot {
+  id                 String   @id @default(cuid())
+  projectId          String
+  project            Project  @relation(fields: [projectId], references: [id])
+  ruleVersion        String
+  receiptAmount      Decimal  @db.Decimal(18, 2)
+  costAmount         Decimal  @db.Decimal(18, 2)
+  netCashflow        Decimal  @db.Decimal(18, 2)
+  distributableRatio Decimal  @db.Decimal(5, 4)
+  distributableValue Decimal  @db.Decimal(18, 2)
+  receiptRatio       Decimal  @db.Decimal(8, 4)
+  completionRatio    Decimal  @db.Decimal(5, 4)
+  confirmedValue     Decimal  @db.Decimal(18, 2)
+  createdAt          DateTime @default(now())
 }

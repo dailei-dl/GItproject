@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   AuditOutlined,
   BankOutlined,
@@ -10,13 +10,45 @@ import {
   SafetyOutlined,
   TeamOutlined,
 } from "@ant-design/icons";
-import { Button, Card, ConfigProvider, Layout, Menu, Table, Tag, Typography } from "antd";
+import { Alert, Button, Card, ConfigProvider, Layout, Menu, Table, Tag, Typography } from "antd";
 import type { MenuProps } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import ReactECharts from "echarts-for-react";
+import {
+  createCustomer,
+  createLead,
+  loadBusinessData,
+  type BusinessData,
+  type Customer,
+  type Lead,
+} from "./api/business";
 
 const { Header, Sider, Content } = Layout;
 const { Text, Title } = Typography;
+
+const emptyBusinessData: BusinessData = {
+  summary: {
+    customerCount: 0,
+    leadCount: 0,
+    opportunityCount: 0,
+    contractCount: 0,
+    projectCount: 0,
+    contractAmount: 0,
+    receiptAmount: 0,
+    costAmount: 0,
+    netCashflow: 0,
+    distributableValue: 0,
+    confirmedValue: 0,
+  },
+  auditLogs: [],
+  customers: [],
+  leads: [],
+  opportunities: [],
+  contracts: [],
+  projects: [],
+  financeEntries: [],
+  valueSnapshots: [],
+};
 
 type PageKey =
   | "dashboard"
@@ -48,15 +80,6 @@ type TraceRow = {
   formula: string;
   result: string;
 };
-
-const metrics: Metric[] = [
-  { label: "合同额", value: "¥8,420,000", tone: "blue" },
-  { label: "回款额", value: "¥5,180,000", tone: "green" },
-  { label: "支出", value: "¥1,260,000", tone: "orange" },
-  { label: "净流水", value: "¥3,920,000", tone: "purple" },
-  { label: "可分配产值", value: "¥3,136,000", tone: "blue" },
-  { label: "确认产值", value: "¥2,352,000", tone: "green" },
-];
 
 const riskRows: RiskRow[] = [
   { key: "1", project: "DT-DEMO-001 总部改造", owner: "项目负责人 A", risk: "阶段完成低于回款比例", status: "跟进中" },
@@ -187,7 +210,33 @@ const moduleColumns: ColumnsType<ModuleRow> = [
   { title: "关键数据", dataIndex: "amount", key: "amount", align: "right" },
 ];
 
-function DashboardPage() {
+const customerColumns: ColumnsType<Customer> = [
+  { title: "客户名称", dataIndex: "name", key: "name" },
+  { title: "来源", dataIndex: "source", key: "source" },
+  { title: "负责人", dataIndex: "ownerName", key: "ownerName" },
+];
+
+const leadColumns: ColumnsType<Lead> = [
+  { title: "线索标题", dataIndex: "title", key: "title" },
+  { title: "预计金额", dataIndex: "expectedAmount", key: "expectedAmount", align: "right" },
+  {
+    title: "状态",
+    dataIndex: "status",
+    key: "status",
+    render: (status: Lead["status"]) => <Tag color={status === "qualified" ? "green" : "blue"}>{status}</Tag>,
+  },
+];
+
+function DashboardPage({ summary }: { summary: BusinessData["summary"] }) {
+  const metrics: Metric[] = [
+    { label: "合同额", value: formatMoney(summary.contractAmount), tone: "blue" },
+    { label: "回款额", value: formatMoney(summary.receiptAmount), tone: "green" },
+    { label: "支出", value: formatMoney(summary.costAmount), tone: "orange" },
+    { label: "净流水", value: formatMoney(summary.netCashflow), tone: "purple" },
+    { label: "可分配产值", value: formatMoney(summary.distributableValue), tone: "blue" },
+    { label: "确认产值", value: formatMoney(summary.confirmedValue), tone: "green" },
+  ];
+
   return (
     <>
       <section className="metric-grid" aria-label="经营指标">
@@ -236,9 +285,142 @@ function ModulePage({ page }: { page: Exclude<PageKey, "dashboard"> }) {
   );
 }
 
+function CrmPage({
+  data,
+  onCreateCustomer,
+  onCreateLead,
+}: {
+  data: BusinessData;
+  onCreateCustomer: (input: { name: string; source: string; ownerName: string }) => Promise<Customer>;
+  onCreateLead: (input: { customerId: string; title: string; expectedAmount: number }) => Promise<Lead>;
+}) {
+  const [customerDraft, setCustomerDraft] = useState({ name: "", source: "", ownerName: "" });
+  const [leadDraft, setLeadDraft] = useState({ title: "", expectedAmount: 0 });
+  const [localCustomers, setLocalCustomers] = useState<Customer[]>([]);
+  const [localLeads, setLocalLeads] = useState<Lead[]>([]);
+  const customers = mergeById(data.customers, localCustomers);
+  const leads = mergeById(data.leads, localLeads);
+  const firstCustomer = customers[0];
+
+  return (
+    <section className="module-page">
+      <div className="business-forms">
+        <Card title="新增客户" className="panel">
+          <div className="field-grid">
+            <input
+              className="business-input"
+              aria-label="客户名称"
+              placeholder="客户名称"
+              value={customerDraft.name}
+              onChange={(event) => setCustomerDraft((draft) => ({ ...draft, name: event.target.value }))}
+            />
+            <input
+              className="business-input"
+              aria-label="客户来源"
+              placeholder="客户来源"
+              value={customerDraft.source}
+              onChange={(event) => setCustomerDraft((draft) => ({ ...draft, source: event.target.value }))}
+            />
+            <input
+              className="business-input"
+              aria-label="负责人"
+              placeholder="负责人"
+              value={customerDraft.ownerName}
+              onChange={(event) => setCustomerDraft((draft) => ({ ...draft, ownerName: event.target.value }))}
+            />
+            <Button
+              type="primary"
+              onClick={async () => {
+                const customer = await onCreateCustomer(customerDraft);
+                setLocalCustomers((items) => mergeById(items, [customer]));
+                setCustomerDraft({ name: "", source: "", ownerName: "" });
+              }}
+            >
+              保存客户
+            </Button>
+          </div>
+        </Card>
+
+        <Card title="新增线索" className="panel">
+          {!firstCustomer ? (
+            <Alert title="请先创建客户，再录入线索" type="info" showIcon />
+          ) : (
+            <div className="field-grid">
+              <input className="business-input" value={firstCustomer.name} disabled aria-label="线索客户" />
+              <input
+                className="business-input"
+                aria-label="线索标题"
+                placeholder="线索标题"
+                value={leadDraft.title}
+                onChange={(event) => setLeadDraft((draft) => ({ ...draft, title: event.target.value }))}
+              />
+              <input
+                className="business-input"
+                aria-label="预计金额"
+                type="number"
+                min="0"
+                value={leadDraft.expectedAmount}
+                onChange={(event) => setLeadDraft((draft) => ({ ...draft, expectedAmount: Number(event.target.value) }))}
+              />
+              <Button
+              type="primary"
+              onClick={async () => {
+                  const lead = await onCreateLead({ customerId: firstCustomer.id, ...leadDraft });
+                  setLocalLeads((items) => mergeById(items, [lead]));
+                  setLeadDraft({ title: "", expectedAmount: 0 });
+                }}
+              >
+                保存线索
+              </Button>
+            </div>
+          )}
+        </Card>
+      </div>
+
+      <Card title="客户列表" className="panel">
+        <Table columns={customerColumns} dataSource={customers} pagination={false} rowKey="id" scroll={{ x: 620 }} />
+      </Card>
+      <Card title="线索列表" className="panel">
+        <Table columns={leadColumns} dataSource={leads} pagination={false} rowKey="id" scroll={{ x: 620 }} />
+      </Card>
+    </section>
+  );
+}
+
+function mergeById<T extends { id: string }>(base: T[], incoming: T[]): T[] {
+  const map = new Map<string, T>();
+  for (const item of base) map.set(item.id, item);
+  for (const item of incoming) map.set(item.id, item);
+  return [...map.values()];
+}
+
+function formatMoney(value: number): string {
+  return `¥${value.toLocaleString("zh-CN", { maximumFractionDigits: 2 })}`;
+}
+
 export function App() {
   const [activePage, setActivePage] = useState<PageKey>("dashboard");
+  const [businessData, setBusinessData] = useState<BusinessData>(emptyBusinessData);
+  const [apiError, setApiError] = useState<string | null>(null);
+  const mutationVersionRef = useRef(0);
   const currentPage = pageMeta[activePage];
+
+  async function refreshBusinessData() {
+    const mutationVersion = mutationVersionRef.current;
+    try {
+      setApiError(null);
+      const nextData = await loadBusinessData();
+      if (mutationVersion === mutationVersionRef.current) {
+        setBusinessData(nextData);
+      }
+    } catch (error) {
+      setApiError(error instanceof Error ? error.message : "业务数据加载失败");
+    }
+  }
+
+  useEffect(() => {
+    void refreshBusinessData();
+  }, []);
 
   return (
     <ConfigProvider
@@ -274,7 +456,36 @@ export function App() {
             <Button type="primary">{currentPage.action}</Button>
           </Header>
           <Content className="content">
-            {activePage === "dashboard" ? <DashboardPage /> : <ModulePage page={activePage} />}
+            {apiError ? <Alert className="api-alert" title={apiError} type="error" showIcon /> : null}
+            {activePage === "dashboard" ? (
+              <DashboardPage summary={businessData.summary} />
+            ) : activePage === "crm" ? (
+              <CrmPage
+                data={businessData}
+                onCreateCustomer={async (input) => {
+                  const customer = await createCustomer(input);
+                  mutationVersionRef.current += 1;
+                  setBusinessData((data) => ({
+                    ...data,
+                    customers: data.customers.some((item) => item.id === customer.id)
+                      ? data.customers
+                      : [...data.customers, customer],
+                  }));
+                  return customer;
+                }}
+                onCreateLead={async (input) => {
+                  const lead = await createLead(input);
+                  mutationVersionRef.current += 1;
+                  setBusinessData((data) => ({
+                    ...data,
+                    leads: data.leads.some((item) => item.id === lead.id) ? data.leads : [...data.leads, lead],
+                  }));
+                  return lead;
+                }}
+              />
+            ) : (
+              <ModulePage page={activePage} />
+            )}
           </Content>
         </Layout>
       </Layout>

@@ -178,12 +178,53 @@ body {
   font-weight: 600;
 }
 
+.api-alert {
+  margin-bottom: 16px;
+}
+
+.business-forms {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.field-grid .ant-btn {
+  min-height: 32px;
+}
+
+.business-input {
+  width: 100%;
+  min-height: 32px;
+  padding: 4px 11px;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #111827;
+  font: inherit;
+}
+
+.business-input:disabled {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
 @media (max-width: 1180px) {
   .metric-grid {
     grid-template-columns: repeat(3, minmax(160px, 1fr));
   }
 
   .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .business-forms,
+  .field-grid {
     grid-template-columns: 1fr;
   }
 }
