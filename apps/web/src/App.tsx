@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   AuditOutlined,
   BankOutlined,
@@ -10,11 +11,22 @@ import {
   TeamOutlined,
 } from "@ant-design/icons";
 import { Button, Card, ConfigProvider, Layout, Menu, Table, Tag, Typography } from "antd";
+import type { MenuProps } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import ReactECharts from "echarts-for-react";
 
 const { Header, Sider, Content } = Layout;
 const { Text, Title } = Typography;
+
+type PageKey =
+  | "dashboard"
+  | "crm"
+  | "contracts"
+  | "projects"
+  | "finance"
+  | "value"
+  | "permissions"
+  | "audit";
 
 type Metric = {
   label: string;
@@ -100,9 +112,134 @@ const menuItems = [
   { key: "value", icon: <BarChartOutlined />, label: "产值管理" },
   { key: "permissions", icon: <TeamOutlined />, label: "组织权限" },
   { key: "audit", icon: <AuditOutlined />, label: "审计日志" },
+] satisfies MenuProps["items"];
+
+const pageMeta: Record<PageKey, { title: string; subtitle: string; action: string }> = {
+  dashboard: { title: "经营驾驶舱", subtitle: "MVP 经营闭环", action: "新建线索" },
+  crm: { title: "CRM 工作台", subtitle: "客户、联系人、线索、机会转化漏斗", action: "新建客户" },
+  contracts: { title: "合同管理", subtitle: "合同审批、补充协议、合同转项目", action: "新建合同" },
+  projects: { title: "项目管理", subtitle: "项目档案、阶段、成员、任务、风险", action: "新建项目" },
+  finance: { title: "财务管理", subtitle: "收款计划、回款、开票、支出、外协成本", action: "登记回款" },
+  value: { title: "产值管理", subtitle: "规则版本、项目产值池、部门分配、个人分配", action: "配置规则" },
+  permissions: { title: "组织权限", subtitle: "公司、分院、部门、员工、角色、字段权限", action: "新增角色" },
+  audit: { title: "审计日志", subtitle: "登录、导出、金额修改、规则变更、权限变更", action: "导出日志" },
+};
+
+type ModuleRow = {
+  key: string;
+  name: string;
+  owner: string;
+  status: string;
+  amount: string;
+};
+
+const moduleRows: Record<Exclude<PageKey, "dashboard">, ModuleRow[]> = {
+  crm: [
+    { key: "crm-1", name: "华东城市更新客户群", owner: "市场一部", status: "方案沟通", amount: "线索 18 / 商机 6" },
+    { key: "crm-2", name: "西南产业园设计机会", owner: "分院经营", status: "投标准备", amount: "预计合同 860万" },
+    { key: "crm-3", name: "老客户复购清单", owner: "客户成功", status: "持续拜访", amount: "回访 24 家" },
+  ],
+  contracts: [
+    { key: "con-1", name: "A-2026-061 城市更新设计合同", owner: "合同专员", status: "法务审核", amount: "1,280万" },
+    { key: "con-2", name: "B-2026-044 补充协议", owner: "项目经理", status: "待盖章", amount: "96万" },
+    { key: "con-3", name: "C-2026-019 合同转项目", owner: "运营管理", status: "已转交付", amount: "420万" },
+  ],
+  projects: [
+    { key: "pro-1", name: "海绵城市示范片区", owner: "设计一院", status: "扩初设计", amount: "进度 68%" },
+    { key: "pro-2", name: "滨水公共空间改造", owner: "景观所", status: "施工图", amount: "风险 2 项" },
+    { key: "pro-3", name: "产业园综合楼", owner: "建筑所", status: "方案深化", amount: "成员 12 人" },
+  ],
+  finance: [
+    { key: "fin-1", name: "6 月应收计划", owner: "财务部", status: "催收中", amount: "342万" },
+    { key: "fin-2", name: "已开票未回款", owner: "财务部", status: "逾期预警", amount: "116万" },
+    { key: "fin-3", name: "外协成本确认", owner: "成本会计", status: "待审批", amount: "58万" },
+  ],
+  value: [
+    { key: "val-1", name: "2026 产值规则 V1", owner: "经营管理", status: "启用中", amount: "规则 12 条" },
+    { key: "val-2", name: "项目产值池试算", owner: "财务部", status: "待确认", amount: "764万" },
+    { key: "val-3", name: "个人产值分配", owner: "分院院长", status: "复核中", amount: "82 人" },
+  ],
+  permissions: [
+    { key: "per-1", name: "经营管理员", owner: "系统管理员", status: "已授权", amount: "字段权限 36 项" },
+    { key: "per-2", name: "分院负责人", owner: "组织管理", status: "待复核", amount: "数据范围 4 级" },
+    { key: "per-3", name: "财务专员", owner: "财务部", status: "已授权", amount: "敏感字段脱敏" },
+  ],
+  audit: [
+    { key: "aud-1", name: "金额字段修改", owner: "审计策略", status: "高风险", amount: "今日 3 次" },
+    { key: "aud-2", name: "导出客户清单", owner: "审计策略", status: "需留痕", amount: "今日 8 次" },
+    { key: "aud-3", name: "产值规则变更", owner: "审计策略", status: "已记录", amount: "版本 V1.2" },
+  ],
+};
+
+const moduleColumns: ColumnsType<ModuleRow> = [
+  { title: "事项", dataIndex: "name", key: "name" },
+  { title: "责任方", dataIndex: "owner", key: "owner" },
+  {
+    title: "状态",
+    dataIndex: "status",
+    key: "status",
+    render: (status: string) => (
+      <Tag color={status.includes("风险") || status.includes("逾期") || status === "高风险" ? "red" : "blue"}>
+        {status}
+      </Tag>
+    ),
+  },
+  { title: "关键数据", dataIndex: "amount", key: "amount", align: "right" },
 ];
 
+function DashboardPage() {
+  return (
+    <>
+      <section className="metric-grid" aria-label="经营指标">
+        {metrics.map((metric) => (
+          <Card className={`metric-card metric-${metric.tone}`} key={metric.label}>
+            <Text>{metric.label}</Text>
+            <strong>{metric.value}</strong>
+          </Card>
+        ))}
+      </section>
+
+      <section className="dashboard-grid">
+        <Card title="回款与产值趋势" className="panel chart-panel">
+          <ReactECharts option={trendOption} style={{ height: 280, minWidth: 560 }} />
+        </Card>
+        <Card title="计算链路" className="panel formula-panel">
+          <Text className="formula">确认产值 = min(回款比例, 阶段完成比例) x 可分配产值</Text>
+          <Table columns={traceColumns} dataSource={traceRows} pagination={false} scroll={{ x: 560 }} size="small" />
+        </Card>
+      </section>
+
+      <Card title="项目风险" className="panel">
+        <Table columns={riskColumns} dataSource={riskRows} pagination={false} scroll={{ x: 760 }} />
+      </Card>
+    </>
+  );
+}
+
+function ModulePage({ page }: { page: Exclude<PageKey, "dashboard"> }) {
+  const meta = pageMeta[page];
+
+  return (
+    <section className="module-page">
+      <Card className="module-hero">
+        <Text className="module-title">{meta.title}</Text>
+        <div className="module-summary">
+          <span>待办 12</span>
+          <span>本周新增 8</span>
+          <span>需复核 3</span>
+        </div>
+      </Card>
+      <Card title="核心事项" className="panel">
+        <Table columns={moduleColumns} dataSource={moduleRows[page]} pagination={false} scroll={{ x: 760 }} />
+      </Card>
+    </section>
+  );
+}
+
 export function App() {
+  const [activePage, setActivePage] = useState<PageKey>("dashboard");
+  const currentPage = pageMeta[activePage];
+
   return (
     <ConfigProvider
       theme={{
@@ -120,45 +257,24 @@ export function App() {
             <SafetyOutlined aria-hidden="true" />
             <span>DesignTwin</span>
           </div>
-          <Menu className="nav-menu" mode="inline" selectedKeys={["dashboard"]} items={menuItems} />
+          <Menu
+            className="nav-menu"
+            mode="inline"
+            selectedKeys={[activePage]}
+            items={menuItems}
+            onClick={({ key }) => setActivePage(key as PageKey)}
+          />
         </Sider>
         <Layout>
           <Header className="topbar">
             <div>
-              <Text className="eyebrow">MVP 经营闭环</Text>
-              <Title level={1}>经营驾驶舱</Title>
+              <Text className="eyebrow">{currentPage.subtitle}</Text>
+              <Title level={1}>{currentPage.title}</Title>
             </div>
-            <Button type="primary">新建线索</Button>
+            <Button type="primary">{currentPage.action}</Button>
           </Header>
           <Content className="content">
-            <section className="metric-grid" aria-label="经营指标">
-              {metrics.map((metric) => (
-                <Card className={`metric-card metric-${metric.tone}`} key={metric.label}>
-                  <Text>{metric.label}</Text>
-                  <strong>{metric.value}</strong>
-                </Card>
-              ))}
-            </section>
-
-            <section className="dashboard-grid">
-              <Card title="回款与产值趋势" className="panel chart-panel">
-                <ReactECharts option={trendOption} style={{ height: 280, minWidth: 560 }} />
-              </Card>
-              <Card title="计算链路" className="panel formula-panel">
-                <Text className="formula">确认产值 = min(回款比例, 阶段完成比例) x 可分配产值</Text>
-                <Table
-                  columns={traceColumns}
-                  dataSource={traceRows}
-                  pagination={false}
-                  scroll={{ x: 560 }}
-                  size="small"
-                />
-              </Card>
-            </section>
-
-            <Card title="项目风险" className="panel">
-              <Table columns={riskColumns} dataSource={riskRows} pagination={false} scroll={{ x: 760 }} />
-            </Card>
+            {activePage === "dashboard" ? <DashboardPage /> : <ModulePage page={activePage} />}
           </Content>
         </Layout>
       </Layout>

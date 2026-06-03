@@ -1,5 +1,6 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { App } from "./App";
 
@@ -28,5 +29,18 @@ describe("DesignTwin web shell", () => {
     expect(
       screen.getByText("确认产值 = min(回款比例, 阶段完成比例) x 可分配产值")
     ).toBeInTheDocument();
+  });
+
+  it("switches module pages from the sidebar navigation", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByText("CRM"));
+    expect(screen.getByRole("heading", { name: "CRM 工作台" })).toBeInTheDocument();
+    expect(screen.getByText("客户、联系人、线索、机会转化漏斗")).toBeInTheDocument();
+
+    await user.click(screen.getByText("合同管理"));
+    expect(screen.getByRole("heading", { name: "合同管理" })).toBeInTheDocument();
+    expect(screen.getByText("合同审批、补充协议、合同转项目")).toBeInTheDocument();
   });
 });

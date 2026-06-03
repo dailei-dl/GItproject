@@ -140,6 +140,44 @@ body {
   font-weight: 600;
 }
 
+.module-page {
+  display: grid;
+  gap: 16px;
+}
+
+.module-hero {
+  border-radius: 6px;
+  border-left: 4px solid #2563eb;
+}
+
+.module-title {
+  display: block;
+  margin: 4px 0 14px;
+  color: #111827;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.module-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.module-summary span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid #dbeafe;
+  border-radius: 6px;
+  background: #eff6ff;
+  color: #1e40af;
+  font-size: 13px;
+  font-weight: 600;
+}
+
 @media (max-width: 1180px) {
   .metric-grid {
     grid-template-columns: repeat(3, minmax(160px, 1fr));
