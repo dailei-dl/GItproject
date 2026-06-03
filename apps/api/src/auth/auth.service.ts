@@ -1,4 +1,5 @@
 import { JwtService } from "@nestjs/jwt";
+import { Injectable } from "@nestjs/common";
 import type { DataScope, DesignTwinRole } from "@designtwin/shared";
 import { DEMO_USERS } from "./demo-users";
 
@@ -22,10 +23,12 @@ export type LoginSession = {
   user: AuthenticatedUser;
 };
 
+@Injectable()
 export class AuthService {
   private readonly jwt: JwtService;
 
-  constructor(secret = process.env.JWT_SECRET || "designtwin-local-dev-secret") {
+  constructor() {
+    const secret = process.env.JWT_SECRET || "designtwin-local-dev-secret";
     this.jwt = new JwtService({ secret, signOptions: { expiresIn: "8h" } });
   }
 

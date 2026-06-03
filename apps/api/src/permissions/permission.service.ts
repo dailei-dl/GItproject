@@ -1,3 +1,4 @@
+import { Injectable } from "@nestjs/common";
 import { SENSITIVE_FIELDS, type DataScope, type DesignTwinRole } from "@designtwin/shared";
 
 export type ActorContext = {
@@ -18,6 +19,7 @@ const COMPANY_ROLES = new Set<DesignTwinRole>(["admin", "owner"]);
 const BRANCH_ROLES = new Set<DesignTwinRole>(["branch_manager", "finance", "hr"]);
 const DEPARTMENT_ROLES = new Set<DesignTwinRole>(["department_manager"]);
 
+@Injectable()
 export class PermissionService {
   canReadRecord(actor: ActorContext, record: RecordScope): boolean {
     if (COMPANY_ROLES.has(actor.role)) return true;

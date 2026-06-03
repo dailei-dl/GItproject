@@ -1,11 +1,13 @@
-import { Body, Controller, Post, UnauthorizedException } from "@nestjs/common";
+import { Body, Controller, Inject, Post, UnauthorizedException } from "@nestjs/common";
 import { AuditService } from "../audit/audit.service";
 import { AuthService, type LoginInput } from "./auth.service";
 
 @Controller("auth")
 export class AuthController {
   constructor(
+    @Inject(AuthService)
     private readonly authService: AuthService,
+    @Inject(AuditService)
     private readonly auditService: AuditService
   ) {}
 

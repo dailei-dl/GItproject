@@ -11,6 +11,7 @@ export type AuditRecord = AuditRecordInput & {
   createdAt: Date;
 };
 
+@Injectable()
 export class AuditService {
   private readonly events: AuditRecord[] = [];
 
@@ -28,3 +29,4 @@ export class AuditService {
     return [...this.events];
   }
 }
+import { Injectable } from "@nestjs/common";
