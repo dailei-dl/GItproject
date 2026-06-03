@@ -35,6 +35,14 @@ npm run check
 npm test
 npm run dev --workspace @designtwin/web
 npm run build --workspace @designtwin/web
+npm run dev --workspace @designtwin/api
+npm run build --workspace @designtwin/api
+```
+
+API health check:
+
+```text
+http://localhost:3000/health
 ```
 
 后续完整 MVP 目标：

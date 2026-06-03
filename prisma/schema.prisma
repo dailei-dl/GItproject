@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum DesignTwinRole {
+  admin
+  owner
+  branch_manager
+  department_manager
+  project_manager
+  finance
+  hr
+  employee
+}
+
+enum DataScope {
+  company
+  branch
+  department
+  project
+  self
+}
+
+model Company {
+  id        String     @id @default(cuid())
+  name      String
+  branches  Branch[]
+  employees Employee[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Branch {
+  id          String       @id @default(cuid())
+  companyId   String
+  company     Company      @relation(fields: [companyId], references: [id])
+  name        String
+  departments Department[]
+  employees   Employee[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Department {
+  id        String     @id @default(cuid())
+  branchId  String
+  branch    Branch     @relation(fields: [branchId], references: [id])
+  name      String
+  employees Employee[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Employee {
+  id           String         @id @default(cuid())
+  companyId    String
+  company      Company        @relation(fields: [companyId], references: [id])
+  branchId     String
+  branch       Branch         @relation(fields: [branchId], references: [id])
+  departmentId String
+  department   Department     @relation(fields: [departmentId], references: [id])
+  email        String         @unique
+  name         String
+  role         DesignTwinRole
+  dataScope    DataScope
+  isActive     Boolean        @default(true)
+  loginLogs    LoginLog[]
+  auditLogs    AuditLog[]     @relation("AuditActor")
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+model LoginLog {
+  id        String   @id @default(cuid())
+  actorId   String
+  actor     Employee @relation(fields: [actorId], references: [id])
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String
+  actor      Employee @relation("AuditActor", fields: [actorId], references: [id])
+  action     String
+  targetType String
+  targetId   String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+}
