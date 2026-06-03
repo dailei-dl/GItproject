@@ -8,9 +8,11 @@ import { HealthController } from "./health.controller";
 import { PermissionService } from "./permissions/permission.service";
 import { ProjectFinanceController } from "./project-finance/project-finance.controller";
 import { ProjectFinanceService } from "./project-finance/project-finance.service";
+import { ValueEngineController } from "./value-engine/value-engine.controller";
+import { ValueEngineService } from "./value-engine/value-engine.service";
 
 @Module({
-  controllers: [AuthController, CrmContractController, HealthController, ProjectFinanceController],
-  providers: [AuditService, AuthService, CrmContractService, PermissionService, ProjectFinanceService],
+  controllers: [AuthController, CrmContractController, HealthController, ProjectFinanceController, ValueEngineController],
+  providers: [AuditService, AuthService, CrmContractService, PermissionService, ProjectFinanceService, ValueEngineService],
 })
 export class AppModule {}
