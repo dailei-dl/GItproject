@@ -1,0 +1,21 @@
+{
+  "name": "designtwin",
+  "version": "0.1.0",
+  "private": true,
+  "description": "DesignTwin design enterprise operating twin platform MVP",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "check": "npm run check --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "security:files": "node scripts/check-sensitive-files.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.29",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3",
+    "vitest": "^4.1.8"
+  }
+}
