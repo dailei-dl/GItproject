@@ -1,0 +1,181 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: #f5f7fb;
+  color: #111827;
+  overflow-x: hidden;
+}
+
+.app-shell {
+  min-height: 100dvh;
+}
+
+.sidebar {
+  background: #0f172a;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 64px;
+  padding: 0 20px;
+  color: #f8fafc;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.brand .anticon {
+  color: #60a5fa;
+}
+
+.nav-menu {
+  background: transparent;
+  border-inline-end: 0;
+}
+
+.nav-menu .ant-menu-item {
+  min-height: 44px;
+  color: #cbd5e1;
+}
+
+.nav-menu .ant-menu-item-selected {
+  background: #1d4ed8;
+  color: #ffffff;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: auto;
+  min-height: 72px;
+  padding: 16px 24px;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  line-height: 1.2;
+}
+
+.topbar h1.ant-typography {
+  margin: 2px 0 0;
+  font-size: 24px;
+  letter-spacing: 0;
+}
+
+.eyebrow {
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.content {
+  padding: 20px 24px 28px;
+}
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.metric-card {
+  border-radius: 6px;
+}
+
+.metric-card .ant-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 104px;
+}
+
+.metric-card strong {
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.metric-blue {
+  border-top: 3px solid #2563eb;
+}
+
+.metric-green {
+  border-top: 3px solid #16a34a;
+}
+
+.metric-orange {
+  border-top: 3px solid #ea580c;
+}
+
+.metric-purple {
+  border-top: 3px solid #7c3aed;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(360px, 0.9fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.panel {
+  border-radius: 6px;
+  min-width: 0;
+}
+
+.panel .ant-card-body {
+  overflow-x: auto;
+}
+
+.formula {
+  display: block;
+  margin-bottom: 12px;
+  color: #1e293b;
+  font-weight: 600;
+}
+
+@media (max-width: 1180px) {
+  .metric-grid {
+    grid-template-columns: repeat(3, minmax(160px, 1fr));
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .ant-layout-sider-zero-width-trigger {
+    inset-inline-start: 8px;
+    top: 16px;
+  }
+
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 14px 16px 14px 56px;
+  }
+
+  .topbar .ant-btn {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .content {
+    padding: 14px;
+  }
+
+  .metric-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .metric-card .ant-card-body {
+    min-height: 88px;
+  }
+}

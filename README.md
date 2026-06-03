@@ -33,6 +33,8 @@ DesignTwin 是面向设计院、设计公司和分院制机构的企业经营孪
 npm install
 npm run check
 npm test
+npm run dev --workspace @designtwin/web
+npm run build --workspace @designtwin/web
 ```
 
 后续完整 MVP 目标：
